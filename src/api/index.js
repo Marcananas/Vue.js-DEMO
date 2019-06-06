@@ -29,7 +29,14 @@ export const login = (obj) => {
 
 // 获取用户数据列表
 export const getUserList = (obj) => {
-  return axios.get('users', { params: obj }).then((response) => {
+  return axios.get('users', { params: obj }).then(response => {
     return response.data
+  })
+}
+
+// 更改用户数据
+export const putUser = (obj) => {
+  return axios.put(`users/${obj.id}`, obj).then(response => {
+    return response
   })
 }

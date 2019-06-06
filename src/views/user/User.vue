@@ -8,10 +8,17 @@
     </el-breadcrumb>
     <!-- 搜索区域 -->
     <div style="margin-top: 15px;">
-      <el-input placeholder="请输入内容" v-model="query" class="input-with-select">
-        <el-button slot="append" icon="el-icon-search" @click="init"></el-button>
+      <el-input
+        placeholder="请输入内容"
+        v-model="query"
+        class="input-with-select"
+        clearable
+        prefix-icon="el-icon-search"
+        @input="clear"
+      >
+        <!-- <el-button slot="append" icon="el-icon-search" @click="init"></el-button> -->
       </el-input>
-      <el-button type="success" plain @click="clear">清除搜索</el-button>
+      <el-button type="success" plain>添加用户</el-button>
     </div>
     <!-- 数据展示区域 -->
     <el-table :data="tableData" border style="width: 100%">
@@ -25,17 +32,19 @@
         </template>
       </el-table-column>
       <el-table-column prop label="操作">
-        <el-button-group>
-          <el-tooltip class="item" effect="light" content="编辑" placement="top">
-            <el-button type="primary" icon="el-icon-edit" @click="dialogFormVisible = true"></el-button>
-          </el-tooltip>
-          <el-tooltip class="item" effect="light" content="删除" placement="top">
-            <el-button type="warning" icon="el-icon-delete"></el-button>
-          </el-tooltip>
-          <el-tooltip class="item" effect="light" content="分配角色" placement="top">
-            <el-button type="success" icon="el-icon-finished"></el-button>
-          </el-tooltip>
-        </el-button-group>
+        <template slot-scope="scope">
+          <el-button-group>
+            <el-tooltip class="item" effect="light" content="编辑" placement="top">
+              <el-button type="primary" icon="el-icon-edit" @click="showEdit(scope.row)"></el-button>
+            </el-tooltip>
+            <el-tooltip class="item" effect="light" content="删除" placement="top">
+              <el-button type="warning" icon="el-icon-delete"></el-button>
+            </el-tooltip>
+            <el-tooltip class="item" effect="light" content="分配角色" placement="top">
+              <el-button type="success" icon="el-icon-finished"></el-button>
+            </el-tooltip>
+          </el-button-group>
+        </template>
       </el-table-column>
     </el-table>
     <!-- 分页器 -->
@@ -52,47 +61,57 @@
     </div>
     <!-- 编辑弹窗 -->
     <el-dialog title="编辑用户" :visible.sync="dialogFormVisible">
-      <el-form :model="form">
-        <el-form-item label="用户名" :label-width="formLabelWidth">
-          <el-input v-model="form.username" autocomplete="off"></el-input>
+      <el-form :model="form" :label-width="'120px'" :rules="rules">
+        <el-form-item label="用户名">
+          <el-input v-model="form.username" autocomplete="off" disabled></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" :label-width="formLabelWidth">
-          <el-input v-model="form.mobile" autocomplete="off"></el-input>
+        <el-form-item label="邮箱">
+          <el-input v-model="form.email" autocomplete="off" prop="email"></el-input>
         </el-form-item>
-        <el-form-item label="手机号" :label-width="formLabelWidth">
-          <el-input v-model="form.email" autocomplete="off"></el-input>
+        <el-form-item label="手机号">
+          <el-input v-model="form.mobile" autocomplete="off" prop="mobile"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+        <el-button type="primary" @click="editUser">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getUserList } from '@/api/index.js'
+import {
+  getUserList,
+  putUser
+} from '@/api/index.js'
 export default {
   data () {
     return {
       userSwitch: true,
       tableData: [],
-      pagesize: 5,
+      pagesize: 4,
       pagenum: 1,
       query: '',
       total: 5,
       dialogFormVisible: false,
+      // 编辑用表单
       form: {
+        id: '',
         username: '',
         mobile: '',
         email: ''
       },
-      formLabelWidth: '120px'
+      rules: {
+        email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
+        mobile: [{ required: true, message: '请输入手机号', trigger: 'blur' }]
+      }
     }
   },
   methods: {
+    // 刷新列表
     init () {
+      // 发起axios获取列表内容
       getUserList({
         query: this.query,
         pagenum: this.pagenum,
@@ -104,23 +123,43 @@ export default {
         this.pagenum = response.data.pagenum
       })
     },
+    // 清除搜索
     clear () {
-      this.query = ''
       this.pagenum = 1
       this.init()
     },
+    // 更改每页条目数
     handleSizeChange (val) {
       //   console.log(`每页 ${val} 条`)
       this.pagesize = val
       this.init()
     },
+    // 更改页数
     handleCurrentChange (val) {
       //   console.log(`当前页: ${val}`)
       this.pagenum = val
       this.init()
+    },
+    // 显示编辑弹窗内容
+    showEdit (data) {
+      this.dialogFormVisible = true
+      this.form.id = data.id
+      this.form.username = data.username
+      this.form.mobile = data.mobile
+      this.form.email = data.email
+      // console.log(this.form)
+    },
+    // 发起axios更改用户数据
+    editUser () {
+      putUser(this.form).then(response => {
+        console.log(response)
+        this.dialogFormVisible = false
+        this.init()
+      })
     }
   },
   mounted () {
+    // 页面加载同时加载列表数据
     this.init()
   }
 }
