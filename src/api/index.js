@@ -40,3 +40,10 @@ export const putUser = (obj) => {
     return response
   })
 }
+
+// 删除用户数据
+export const deleteUser = (id) => {
+  return axios.delete(`users/${id}`).then(response => {
+    return response
+  })
+}

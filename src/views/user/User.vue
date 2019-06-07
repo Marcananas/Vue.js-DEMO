@@ -38,7 +38,7 @@
               <el-button type="primary" icon="el-icon-edit" @click="showEdit(scope.row)"></el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="light" content="删除" placement="top">
-              <el-button type="warning" icon="el-icon-delete"></el-button>
+              <el-button type="warning" icon="el-icon-delete" @click="delUser(scope.row.id)"></el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="light" content="分配角色" placement="top">
               <el-button type="success" icon="el-icon-finished"></el-button>
@@ -61,14 +61,25 @@
     </div>
     <!-- 编辑弹窗 -->
     <el-dialog title="编辑用户" :visible.sync="dialogFormVisible">
-      <el-form :model="form" :label-width="'120px'" :rules="rules">
+      <el-form :model="form" :label-width="'120px'">
         <el-form-item label="用户名">
           <el-input v-model="form.username" autocomplete="off" disabled></el-input>
         </el-form-item>
-        <el-form-item label="邮箱">
+        <el-form-item
+          label="邮箱"
+          :rules="[
+      { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+      { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
+    ]"
+        >
           <el-input v-model="form.email" autocomplete="off" prop="email"></el-input>
         </el-form-item>
-        <el-form-item label="手机号">
+        <el-form-item
+          label="手机号"
+          :rules="{
+      required: true, message: '手机号不能为空', trigger: 'blur'
+    }"
+        >
           <el-input v-model="form.mobile" autocomplete="off" prop="mobile"></el-input>
         </el-form-item>
       </el-form>
@@ -81,10 +92,7 @@
 </template>
 
 <script>
-import {
-  getUserList,
-  putUser
-} from '@/api/index.js'
+import { getUserList, putUser, deleteUser } from '@/api/index.js'
 export default {
   data () {
     return {
@@ -101,10 +109,6 @@ export default {
         username: '',
         mobile: '',
         email: ''
-      },
-      rules: {
-        email: [{ required: true, message: '请输入邮箱', trigger: 'blur' }],
-        mobile: [{ required: true, message: '请输入手机号', trigger: 'blur' }]
       }
     }
   },
@@ -154,6 +158,17 @@ export default {
       putUser(this.form).then(response => {
         console.log(response)
         this.dialogFormVisible = false
+        this.init()
+      })
+    },
+    // 发起axios删除用户
+    delUser (id) {
+      // console.log(id)
+      deleteUser(id).then(response => {
+        // console.log(response)
+        if ((this.total - 1) / this.pagesize === this.pagenum) {
+          this.pagenum -= 1
+        }
         this.init()
       })
     }
