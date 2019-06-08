@@ -33,9 +33,21 @@ export const getUserList = (obj) => {
     return response.data
   })
 }
+// 获取角色列表
+export const getRoles = (obj) => {
+  return axios.get('roles').then(response => {
+    return response.data
+  })
+}
 // 添加用户数据
 export const postNewUser = (obj) => {
   return axios.post('users', obj).then(response => {
+    return response
+  })
+}
+// 更改用户状态
+export const putType = (uId, type) => {
+  return axios.put(`users/${uId}/state/${type}`).then(response => {
     return response
   })
 }
@@ -49,6 +61,13 @@ export const putUser = (obj) => {
 // 删除用户数据
 export const deleteUser = (id) => {
   return axios.delete(`users/${id}`).then(response => {
+    return response
+  })
+}
+
+// 分配用户角色
+export const putRole = obj => {
+  return axios.put(`users/${obj.id}/role`, { rid: obj.rid }).then(response => {
     return response
   })
 }

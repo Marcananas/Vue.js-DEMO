@@ -28,7 +28,12 @@
       <el-table-column prop="mobile" label="电话" width="250"></el-table-column>
       <el-table-column prop label="状态" width="60">
         <template slot-scope="scope">
-          <el-switch v-model="scope.row.mg_state" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
+          <el-switch
+            v-model="scope.row.mg_state"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            @change="changeType(scope.row)"
+          ></el-switch>
         </template>
       </el-table-column>
       <el-table-column prop label="操作">
@@ -41,7 +46,7 @@
               <el-button type="warning" icon="el-icon-delete" @click="delUser(scope.row.id)"></el-button>
             </el-tooltip>
             <el-tooltip class="item" effect="light" content="分配角色" placement="top">
-              <el-button type="success" icon="el-icon-finished"></el-button>
+              <el-button type="success" icon="el-icon-finished" @click="showAllot(scope.row)"></el-button>
             </el-tooltip>
           </el-button-group>
         </template>
@@ -71,10 +76,10 @@
         <el-form-item label="手机号">
           <el-input v-model="form.mobile" autocomplete="off" prop="mobile"></el-input>
         </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="editUser">确 定</el-button>
-        <el-button @click="editWin = false">取 消</el-button>
-      </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="editUser">确 定</el-button>
+          <el-button @click="editWin = false">取 消</el-button>
+        </el-form-item>
       </el-form>
     </el-dialog>
     <!-- 添加用户弹窗 -->
@@ -84,7 +89,7 @@
         status-icon
         :rules="rules"
         ref="ruleForm"
-        label-width="100px"
+        label-width="120px"
         class="demo-ruleForm"
       >
         <el-form-item label="用户名" prop="username">
@@ -103,8 +108,30 @@
           <el-input v-model="ruleForm.mobile"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="addUser">提 交</el-button>
-        <el-button @click="addWin = false">取 消</el-button>
+          <el-button type="primary" @click="addUser('ruleForm')">提 交</el-button>
+          <el-button @click="addWin = false">取 消</el-button>
+        </el-form-item>
+      </el-form>
+    </el-dialog>
+    <!-- 分配角色弹窗 -->
+    <el-dialog title="分配用户角色" :visible.sync="allotWin">
+      <el-form :model="form" label-width="120px">
+        <el-form-item label="用户名">
+          <el-input v-model="form.username" autocomplete="off" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="角色" :label-width="'120px'">
+          <el-select v-model="form.rid" placeholder="请选择用户角色">
+            <el-option
+              v-for="item in roleList"
+              :key="item.id"
+              :label="item.roleName"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="allotUser">确 定</el-button>
+          <el-button @click="allotWin = false">取 消</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -112,7 +139,15 @@
 </template>
 
 <script>
-import { getUserList, putUser, deleteUser, postNewUser } from '@/api/index.js'
+import {
+  getUserList,
+  putUser,
+  deleteUser,
+  postNewUser,
+  getRoles,
+  putRole,
+  putType
+} from '@/api/index.js'
 export default {
   data () {
     var validatePass = (rule, value, callback) => {
@@ -140,17 +175,23 @@ export default {
       pagesize: 4,
       pagenum: 1,
       query: '',
-      total: 5,
+      total: 0,
+      // 弹窗开关
       editWin: false,
       addWin: false,
+      allotWin: false,
       // 编辑用表单
       form: {
         id: '',
         username: '',
+        password: '',
+        checkPass: '',
         mobile: '',
-        email: ''
+        email: '',
+        rid: '',
+        role_name: ''
       },
-      // 添加用表单
+      // 添加用户表单
       ruleForm: {
         username: '',
         password: '',
@@ -158,17 +199,15 @@ export default {
         email: '',
         mobile: ''
       },
+      // 角色列表
+      roleList: [],
       // 添加用户表单验证
       rules: {
         username: [
           { required: true, message: '用户名不能为空', trigger: 'blur' }
         ],
-        password: [
-          { validator: validatePass, trigger: 'blur' }
-        ],
-        checkPass: [
-          { validator: validatePass2, trigger: 'blur' }
-        ]
+        password: [{ validator: validatePass, trigger: 'blur' }],
+        checkPass: [{ validator: validatePass2, trigger: 'blur' }]
       }
     }
   },
@@ -193,11 +232,19 @@ export default {
       this.init()
     },
     // 发起axios添加用户
-    addUser () {
-      postNewUser(this.ruleForm).then(response => {
+    addUser (ruleForm) {
+      postNewUser(this.ruleForm, ruleForm).then(response => {
         console.log(response)
         this.addWin = false
+        this.$refs[ruleForm].resetFields()
         this.init()
+      })
+    },
+    // 发起axios更改用户状态
+    changeType (data) {
+      console.log(data)
+      putType(data.id, data.mg_state).then(response => {
+        console.log(response)
       })
     },
     // 显示编辑弹窗内容
@@ -208,6 +255,14 @@ export default {
       this.form.mobile = data.mobile
       this.form.email = data.email
       // console.log(this.form)
+    },
+    // 显示用户角色分配弹窗
+    showAllot (data) {
+      console.log(data)
+      this.allotWin = true
+      this.form.id = data.id
+      this.form.username = data.username
+      this.form.rid = data.rid
     },
     // 发起axios更改用户数据
     editUser () {
@@ -228,6 +283,14 @@ export default {
         this.init()
       })
     },
+    // 发起axios分配用户角色
+    allotUser () {
+      putRole(this.form).then(response => {
+        console.log(response)
+        this.allotWin = false
+        this.init()
+      })
+    },
     // 更改每页条目数
     handleSizeChange (val) {
       //   console.log(`每页 ${val} 条`)
@@ -244,6 +307,11 @@ export default {
   mounted () {
     // 页面加载同时加载列表数据
     this.init()
+    // 页面加载同时获取角色列表
+    getRoles().then(response => {
+      // console.log(response)
+      this.roleList = response.data
+    })
   }
 }
 </script>
