@@ -7,7 +7,7 @@
           <el-input v-model="LoginForm.username" prefix-icon="myicon myicon-user"></el-input>
         </el-form-item>
         <el-form-item label prop="password">
-          <el-input v-model="LoginForm.password" prefix-icon="myicon myicon-key"></el-input>
+          <el-input v-model="LoginForm.password" prefix-icon="myicon myicon-key" @keyup.enter.native='loginSubmit("LoginForm")'></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" class="login-btn" @click="loginSubmit('LoginForm')">登录</el-button>
@@ -18,7 +18,7 @@
 </template>
 <script>
 // 对象的解构
-import { login } from '@/api/index.js'
+import { login } from '@/api/users_index.js'
 export default {
   data () {
     return {

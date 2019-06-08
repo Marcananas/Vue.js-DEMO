@@ -147,7 +147,7 @@ import {
   getRoles,
   putRole,
   putType
-} from '@/api/index.js'
+} from '@/api/users_index.js'
 export default {
   data () {
     var validatePass = (rule, value, callback) => {
