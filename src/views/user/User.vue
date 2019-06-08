@@ -14,11 +14,11 @@
         class="input-with-select"
         clearable
         prefix-icon="el-icon-search"
-        @input="clear"
+        @input="searchUser"
       >
         <!-- <el-button slot="append" icon="el-icon-search" @click="init"></el-button> -->
       </el-input>
-      <el-button type="success" plain>添加用户</el-button>
+      <el-button type="success" plain @click="addWin = true">添加用户</el-button>
     </div>
     <!-- 数据展示区域 -->
     <el-table :data="tableData" border style="width: 100%">
@@ -60,41 +60,80 @@
       ></el-pagination>
     </div>
     <!-- 编辑弹窗 -->
-    <el-dialog title="编辑用户" :visible.sync="dialogFormVisible">
+    <el-dialog title="编辑用户" :visible.sync="editWin">
       <el-form :model="form" :label-width="'120px'">
         <el-form-item label="用户名">
           <el-input v-model="form.username" autocomplete="off" disabled></el-input>
         </el-form-item>
-        <el-form-item
-          label="邮箱"
-          :rules="[
-      { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-      { type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] }
-    ]"
-        >
+        <el-form-item label="邮箱">
           <el-input v-model="form.email" autocomplete="off" prop="email"></el-input>
         </el-form-item>
-        <el-form-item
-          label="手机号"
-          :rules="{
-      required: true, message: '手机号不能为空', trigger: 'blur'
-    }"
-        >
+        <el-form-item label="手机号">
           <el-input v-model="form.mobile" autocomplete="off" prop="mobile"></el-input>
         </el-form-item>
-      </el-form>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogFormVisible = false">取 消</el-button>
+      <el-form-item>
         <el-button type="primary" @click="editUser">确 定</el-button>
-      </div>
+        <el-button @click="editWin = false">取 消</el-button>
+      </el-form-item>
+      </el-form>
+    </el-dialog>
+    <!-- 添加用户弹窗 -->
+    <el-dialog title="添加用户" :visible.sync="addWin">
+      <el-form
+        :model="ruleForm"
+        status-icon
+        :rules="rules"
+        ref="ruleForm"
+        label-width="100px"
+        class="demo-ruleForm"
+      >
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="ruleForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input type="password" v-model="ruleForm.password" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="checkPass">
+          <el-input type="password" v-model="ruleForm.checkPass" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="ruleForm.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="ruleForm.mobile"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="addUser">提 交</el-button>
+        <el-button @click="addWin = false">取 消</el-button>
+        </el-form-item>
+      </el-form>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import { getUserList, putUser, deleteUser } from '@/api/index.js'
+import { getUserList, putUser, deleteUser, postNewUser } from '@/api/index.js'
 export default {
   data () {
+    var validatePass = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入密码'))
+      } else {
+        if (this.ruleForm.checkPass !== '') {
+          this.$refs.ruleForm.validateField('checkPass')
+        }
+        callback()
+      }
+    }
+    var validatePass2 = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请再次输入密码'))
+      } else if (value !== this.ruleForm.password) {
+        callback(new Error('两次输入密码不一致!'))
+      } else {
+        callback()
+      }
+    }
     return {
       userSwitch: true,
       tableData: [],
@@ -102,13 +141,34 @@ export default {
       pagenum: 1,
       query: '',
       total: 5,
-      dialogFormVisible: false,
+      editWin: false,
+      addWin: false,
       // 编辑用表单
       form: {
         id: '',
         username: '',
         mobile: '',
         email: ''
+      },
+      // 添加用表单
+      ruleForm: {
+        username: '',
+        password: '',
+        checkPass: '',
+        email: '',
+        mobile: ''
+      },
+      // 添加用户表单验证
+      rules: {
+        username: [
+          { required: true, message: '用户名不能为空', trigger: 'blur' }
+        ],
+        password: [
+          { validator: validatePass, trigger: 'blur' }
+        ],
+        checkPass: [
+          { validator: validatePass2, trigger: 'blur' }
+        ]
       }
     }
   },
@@ -128,25 +188,21 @@ export default {
       })
     },
     // 清除搜索
-    clear () {
+    searchUser () {
       this.pagenum = 1
       this.init()
     },
-    // 更改每页条目数
-    handleSizeChange (val) {
-      //   console.log(`每页 ${val} 条`)
-      this.pagesize = val
-      this.init()
-    },
-    // 更改页数
-    handleCurrentChange (val) {
-      //   console.log(`当前页: ${val}`)
-      this.pagenum = val
-      this.init()
+    // 发起axios添加用户
+    addUser () {
+      postNewUser(this.ruleForm).then(response => {
+        console.log(response)
+        this.addWin = false
+        this.init()
+      })
     },
     // 显示编辑弹窗内容
     showEdit (data) {
-      this.dialogFormVisible = true
+      this.editWin = true
       this.form.id = data.id
       this.form.username = data.username
       this.form.mobile = data.mobile
@@ -157,7 +213,7 @@ export default {
     editUser () {
       putUser(this.form).then(response => {
         console.log(response)
-        this.dialogFormVisible = false
+        this.editWin = false
         this.init()
       })
     },
@@ -171,6 +227,18 @@ export default {
         }
         this.init()
       })
+    },
+    // 更改每页条目数
+    handleSizeChange (val) {
+      //   console.log(`每页 ${val} 条`)
+      this.pagesize = val
+      this.init()
+    },
+    // 更改页数
+    handleCurrentChange (val) {
+      //   console.log(`当前页: ${val}`)
+      this.pagenum = val
+      this.init()
     }
   },
   mounted () {

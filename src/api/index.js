@@ -33,7 +33,12 @@ export const getUserList = (obj) => {
     return response.data
   })
 }
-
+// 添加用户数据
+export const postNewUser = (obj) => {
+  return axios.post('users', obj).then(response => {
+    return response
+  })
+}
 // 更改用户数据
 export const putUser = (obj) => {
   return axios.put(`users/${obj.id}`, obj).then(response => {
