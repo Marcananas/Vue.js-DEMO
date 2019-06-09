@@ -8,34 +8,18 @@
           :unique-opened="true"
           default-active="2"
           class="el-menu-vertical-demo"
-          @open="handleOpen"
-          @close="handleClose"
           background-color="#545c64"
           text-color="#fff"
           active-text-color="#ffd04b"
         >
-          <el-submenu index="1">
+          <el-submenu :index="item.order+''" v-for="item in menusList" :key="item.id">
             <template slot="title">
               <i class="el-icon-user-solid"></i>
-              <span>用户管理</span>
+              <span>{{item.authName}}</span>
             </template>
-            <el-menu-item index="/home/user">
+            <el-menu-item :index="'/home/'+subitem.path" v-for="subitem in item.children" :key="subitem.id">
               <i class="el-icon-menu"></i>
-              <span>用户列表</span>
-            </el-menu-item>
-          </el-submenu>
-          <el-submenu index="2">
-            <template slot="title">
-              <i class="el-icon-s-check"></i>
-              <span>权限管理</span>
-            </template>
-            <el-menu-item index="2-1">
-              <i class="el-icon-menu"></i>
-              <span>角色列表</span>
-            </el-menu-item>
-            <el-menu-item index="2-2">
-              <i class="el-icon-menu"></i>
-              <span>权限列表</span>
+              <span>{{subitem.authName}}</span>
             </el-menu-item>
           </el-submenu>
         </el-menu>
@@ -58,18 +42,20 @@
 </template>
 
 <script>
+import { getMenus } from '@/api/rights_index.js'
 export default {
   data () {
-    return {}
-  },
-  methods: {
-    handleOpen (key, keyPath) {
-      console.log(key, keyPath)
-    },
-    handleClose (key, keyPath) {
-      console.log(key, keyPath)
+    return {
+      menusList: []
     }
-  }
+  },
+  mounted () {
+    getMenus().then(response => {
+      // console.log(response)
+      this.menusList = response
+    })
+  },
+  methods: {}
 }
 </script>
 
@@ -77,16 +63,15 @@ export default {
 .home {
   height: 100%;
 
-//   .el-menu-admin:not(.el-menu--collapse) {
-//     width: 200px;
-//     min-height: 400px;
-//   }
+  //   .el-menu-admin:not(.el-menu--collapse) {
+  //     width: 200px;
+  //     min-height: 400px;
+  //   }
 
   .logo {
     display: block;
     height: 60px;
-    margin:0 auto;
-
+    margin: 0 auto;
   }
 
   .el-container {

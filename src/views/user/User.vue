@@ -144,10 +144,10 @@ import {
   putUser,
   deleteUser,
   postNewUser,
-  getRoles,
   putRole,
   putType
 } from '@/api/users_index.js'
+import { getRoles } from '@/api/roles_index.js'
 export default {
   data () {
     var validatePass = (rule, value, callback) => {
@@ -258,7 +258,7 @@ export default {
     },
     // 显示用户角色分配弹窗
     showAllot (data) {
-      console.log(data)
+      // console.log(data)
       this.allotWin = true
       this.form.id = data.id
       this.form.username = data.username

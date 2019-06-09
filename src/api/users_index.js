@@ -33,12 +33,6 @@ export const getUserList = (obj) => {
     return response.data
   })
 }
-// 获取角色列表
-export const getRoles = (obj) => {
-  return axios.get('roles').then(response => {
-    return response.data
-  })
-}
 // 添加用户数据
 export const postNewUser = (obj) => {
   return axios.post('users', obj).then(response => {

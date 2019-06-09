@@ -15,3 +15,16 @@ axios.interceptors.request.use(function (config) {
   // 对请求错误做些什么
   return Promise.reject(error)
 })
+// 获取左侧菜单
+export const getMenus = () => {
+  return axios.get('menus').then(response => {
+    return response.data.data
+  })
+}
+// 获取所有权限列表
+export const getRights = (type) => {
+  return axios({
+    type: 'get',
+    url: `rights/${type}`
+  })
+}
